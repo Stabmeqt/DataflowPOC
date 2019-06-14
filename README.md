@@ -34,8 +34,10 @@ Several parameters should be specified in order to invoke pipeline job on Datafl
 1. Bigtable instance id
 1. Bigtable table id
 1. Operation type (join | batch | rest | grpc)
+1. Microservice hostname
+1. Microservice port
 ```
-java -jar Avro-BigTable-Join-1.0-SNAPSHOT.jar --runner=DataflowRunner 
+java -jar DataflowPOC-1.0-SNAPSHOT.jar --runner=DataflowRunner 
 --tempLocation=gs://[BUCKET_ID/tmp] --project=[PROJECT_ID] --inputFile=gs://[YOUR_BUCKET]/10k_c.avro 
 --outputFolder=gs://[PATH_TO_OUTPUT_FOLDER] --instanceId=[BIGTABLE_INSTANCE_ID] --tableId=[TABLE_ID]
 --operation=[join|batch|rest|grpc] --clientHost=[MICROSERVICE_HOST] --clientPort=[MICROSERVICE_PORT]
