@@ -14,7 +14,16 @@ public class Main {
 
     public static void main(String[] args) {
 
-        final BasicOptions pipelineOptions = PipelineOptionsFactory.fromArgs(args).as(BasicOptions.class);
+        BasicOptions pipelineOptions = null;
+        try {
+            pipelineOptions = PipelineOptionsFactory
+                    .fromArgs(args)
+                    .withValidation()
+                    .as(BasicOptions.class);
+        } catch (Exception e) {
+            PipelineOptionsFactory.printHelp(System.err, BasicOptions.class);
+            System.exit(1);
+        }
         final Pipeline pipeline = Pipeline.create(pipelineOptions);
 
 

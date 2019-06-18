@@ -9,8 +9,9 @@ BigtableMicroservice (either using REST or GRPC) and outputs the joined result.
 
 ## Prerequisites
 Dataflow API should be enabled in your GCP project.
-BigTable should be pre-populated with the data from NameYear.avro (please refer to https://github
-.com/dvalex0707/BigtableMicroservicePoc). Make sure to write down the IP address of the service.
+BigTable should be pre-populated with the data from NameYear.avro (please refer to 
+[BigtableMicroservicePoc](https://github.com/dvalex0707/BigtableMicroservicePoc)).
+Make sure to write down the IP address of the service.
 
 ## Installation
 Clone and compile. Fat jar will be produced. Export needed environment variables.
