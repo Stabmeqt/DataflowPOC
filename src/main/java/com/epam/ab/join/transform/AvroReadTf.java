@@ -1,6 +1,7 @@
 package com.epam.ab.join.transform;
 
 import com.epam.ab.join.model.Source;
+import org.apache.beam.sdk.transforms.Count;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.SimpleFunction;

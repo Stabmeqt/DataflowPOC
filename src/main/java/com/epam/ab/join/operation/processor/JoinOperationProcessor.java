@@ -26,12 +26,12 @@ public class JoinOperationProcessor implements OperationProcessor {
         this.options = options;
     }
 
-    private static SimpleFunction<KV<String, KV<Source, Long>>, SourceWithRef> mapToSourceWithRef() {
-        return new SimpleFunction<KV<String, KV<Source, Long>>, SourceWithRef>() {
+    private static SimpleFunction<KV<String, KV<Long, Source>>, SourceWithRef> mapToSourceWithRef() {
+        return new SimpleFunction<KV<String, KV<Long, Source>>, SourceWithRef>() {
             @Override
-            public SourceWithRef apply(KV<String, KV<Source, Long>> input) {
-                final KV<Source, Long> value = input.getValue();
-                return new SourceWithRef(value.getKey(), value.getValue());
+            public SourceWithRef apply(KV<String, KV<Long, Source>> input) {
+                final KV<Long, Source> value = input.getValue();
+                return new SourceWithRef(value.getValue(), value.getKey());
             }
         };
     }
@@ -54,7 +54,7 @@ public class JoinOperationProcessor implements OperationProcessor {
                 .apply(AvroIO.read(Source.class).from(pipelineOptions.getInputFile()))
                 .apply(new AvroReadTf());
 
-        final PCollection<KV<String, KV<Source, Long>>> joined = Join.innerJoin(avroCollection, kvBigTableCollection);
+        final PCollection<KV<String, KV<Long, Source>>> joined = Join.innerJoin(kvBigTableCollection, avroCollection);
 
         joined
                 .apply(MapElements.via(mapToSourceWithRef()))
