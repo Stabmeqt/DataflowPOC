@@ -9,7 +9,8 @@ BigtableMicroservice (either using REST or GRPC) and outputs the joined result.
 
 ## Prerequisites
 Dataflow API should be enabled in your GCP project.
-BigTable should be pre-populated with the data from NameYear.avro (please refer https://github.com/dvalex0707/BigtableMicroservicePoc)
+BigTable should be pre-populated with the data from NameYear.avro (please refer to https://github
+.com/dvalex0707/BigtableMicroservicePoc)
 
 ## Installation
 Clone and compile. Fat jar will be produced.
@@ -21,7 +22,7 @@ mvn clean package
 Copy the input avro file to your cloud storage
 ```bash
 cd in
-gcloud cp 10k_c.avro gs://[YOUR_BUCKET]
+gsutil cp 10k_c.avro gs://[YOUR_BUCKET]
 ```
 
 ## Run the pipeline
