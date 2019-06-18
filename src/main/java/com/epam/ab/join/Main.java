@@ -17,7 +17,7 @@ public class Main {
         final BasicOptions pipelineOptions = PipelineOptionsFactory.fromArgs(args).as(BasicOptions.class);
         final Pipeline pipeline = Pipeline.create(pipelineOptions);
 
-        Scan scan = new Scan();
+        final Scan scan = new Scan();
         scan.setCacheBlocks(true);
 
         CloudBigtableScanConfiguration configuration = new CloudBigtableScanConfiguration.Builder()
