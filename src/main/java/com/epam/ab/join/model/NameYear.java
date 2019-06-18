@@ -17,28 +17,24 @@ public class NameYear {
         this.year = year;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setYear(int year) {
-        this.year = year;
-    }
-
-    static String getKey(String name, int year) {
-        return String.format("%s|%d", name, year);
-    }
-
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public int getYear() {
         return year;
     }
 
+    public void setYear(int year) {
+        this.year = year;
+    }
+
     public String getKey() {
-        return getKey(name, year);
+        return String.format("%s|%d", name, year);
     }
 
     @Override

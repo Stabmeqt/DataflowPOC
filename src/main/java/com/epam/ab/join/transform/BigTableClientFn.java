@@ -8,17 +8,17 @@ import com.epam.ab.join.model.Source;
 import com.epam.ab.join.model.SourceWithRef;
 import com.epam.ab.join.operation.BigTableClientConnectionOptions;
 import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.values.KV;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-public class BigTableClientFn extends DoFn<Source, List<SourceWithRef>> {
+public class BigTableClientFn extends DoFn<KV<String, Iterable<Source>>, List<SourceWithRef>> {
 
-    private List<Source> buffer = new ArrayList<>();
+    private final BigTableClientConnectionOptions connectionOptions;
     private BigTableClient client;
-    private BigTableClientConnectionOptions connectionOptions;
-
 
     public BigTableClientFn(BigTableClientConnectionOptions connectionOptions) {
         this.connectionOptions = connectionOptions;
@@ -36,20 +36,21 @@ public class BigTableClientFn extends DoFn<Source, List<SourceWithRef>> {
     }
 
     @ProcessElement
-    public void processElement(@Element Source element, OutputReceiver<List<SourceWithRef>> receiver) {
-        buffer.add(element);
-        if (buffer.size() == 100) {
+    public void processElement(
+            @Element KV<String, Iterable<Source>> element, OutputReceiver<List<SourceWithRef>> receiver) {
+        final List<Source> sources = StreamSupport.stream(element.getValue().spliterator(), false)
+                .collect(Collectors.toList());
+        final List<NameYear> nameYearList = sources.stream()
+                .map(source -> new NameYear(source.getName(), (int) source.getYear()))
+                .collect(Collectors.toList());
 
-            List<NameYear> nameYearList = buffer.stream().map(source -> new NameYear(source.getName(), (int) source.getYear()))
-                    .collect(Collectors.toList());
-            List<Long> refNumbers = getClient().getRefNumbers(nameYearList);
-            List<SourceWithRef> resultList = new ArrayList<>();
-            for (int i = 0; i < buffer.size(); i++) {
-                resultList.add(new SourceWithRef(buffer.get(i), refNumbers.get(i)));
-            }
+        final List<Long> refNumbers = getClient().getRefNumbers(nameYearList);
+        List<SourceWithRef> resultList = new ArrayList<>();
 
-            receiver.output(resultList);
-            buffer.clear();
+        for (int i = 0; i < sources.size(); i++) {
+            resultList.add(new SourceWithRef(sources.get(i), refNumbers.get(i)));
         }
+
+        receiver.output(resultList);
     }
 }

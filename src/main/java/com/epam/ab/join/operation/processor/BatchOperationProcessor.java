@@ -10,14 +10,14 @@ import com.epam.ab.join.transform.FlattenListFn;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.AvroIO;
-import org.apache.beam.sdk.transforms.DoFn;
+import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.GroupIntoBatches;
 import org.apache.beam.sdk.transforms.MapElements;
 import org.apache.beam.sdk.transforms.ParDo;
-import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 
-import java.util.List;
-import java.util.Map;
+import java.io.Console;
 
 public class BatchOperationProcessor implements OperationProcessor {
     private final ProcessingOptions options;
@@ -32,18 +32,20 @@ public class BatchOperationProcessor implements OperationProcessor {
         final CloudBigtableScanConfiguration configuration = options.getConfiguration();
         final BasicOptions pipelineOptions = options.getPipelineOptions();
 
-        final PCollection<Source> avroCollection =
-                pipeline.apply(AvroIO.read(Source.class).from(pipelineOptions.getInputFile()));
 
-        avroCollection
+        final PCollection<KV<String, Iterable<Source>>> batchedAvroCollection = pipeline
+                .apply(AvroIO.read(Source.class).from(pipelineOptions.getInputFile()))
+                .apply(MapElements.via(OperationProcessor.mapToKV()))
+                .apply(GroupIntoBatches.ofSize(pipelineOptions.getBatchSize()));
+
+        batchedAvroCollection
                 .apply(ParDo.of(new BigTableBatchGetFn(configuration, pipelineOptions.getTableId())))
-                .apply(ParDo.of(new FlattenListFn<>()))
-                .apply(ParDo.of(new ConsolePrintFn<>()))
+                .apply(Flatten.iterables())
                 .apply(AvroIO.write(SourceWithRef.class)
                         .to(pipelineOptions.getOutputFolder() + "/out")
                         .withoutSharding()
                         .withSuffix(".avro"));
 
-        pipeline.run().waitUntilFinish();
+        pipeline.run();
     }
 }

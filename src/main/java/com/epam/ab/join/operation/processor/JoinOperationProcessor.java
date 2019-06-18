@@ -7,7 +7,6 @@ import com.epam.ab.join.model.SourceWithRef;
 import com.epam.ab.join.operation.ProcessingOptions;
 import com.epam.ab.join.transform.AvroReadTf;
 import com.epam.ab.join.transform.BigTableReadTf;
-import com.epam.ab.join.transform.ConsolePrintFn;
 import com.google.cloud.bigtable.beam.CloudBigtableIO;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import org.apache.beam.sdk.Pipeline;
@@ -15,7 +14,6 @@ import org.apache.beam.sdk.extensions.joinlibrary.Join;
 import org.apache.beam.sdk.io.AvroIO;
 import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.transforms.MapElements;
-import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.transforms.SimpleFunction;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
@@ -25,7 +23,17 @@ public class JoinOperationProcessor implements OperationProcessor {
     private final ProcessingOptions options;
 
     public JoinOperationProcessor(ProcessingOptions options) {
-       this.options = options;
+        this.options = options;
+    }
+
+    private static SimpleFunction<KV<String, KV<Source, Long>>, SourceWithRef> mapToSourceWithRef() {
+        return new SimpleFunction<KV<String, KV<Source, Long>>, SourceWithRef>() {
+            @Override
+            public SourceWithRef apply(KV<String, KV<Source, Long>> input) {
+                final KV<Source, Long> value = input.getValue();
+                return new SourceWithRef(value.getKey(), value.getValue());
+            }
+        };
     }
 
     @Override
@@ -48,26 +56,13 @@ public class JoinOperationProcessor implements OperationProcessor {
 
         final PCollection<KV<String, KV<Source, Long>>> joined = Join.innerJoin(avroCollection, kvBigTableCollection);
 
-        final PCollection<SourceWithRef> finalResult = joined.apply(
-                MapElements.via(mapToSourceWithRef()));
-
-         finalResult
-                .apply(ParDo.of(new ConsolePrintFn<>()))
+        joined
+                .apply(MapElements.via(mapToSourceWithRef()))
                 .apply(AvroIO.write(SourceWithRef.class)
                         .to(pipelineOptions.getOutputFolder() + "/out")
                         .withoutSharding()
                         .withSuffix(".avro"));
 
-        pipeline.run().waitUntilFinish();
-    }
-
-    private static SimpleFunction<KV<String, KV<Source, Long>>, SourceWithRef> mapToSourceWithRef() {
-        return new SimpleFunction<KV<String, KV<Source, Long>>, SourceWithRef>() {
-            @Override
-            public SourceWithRef apply(KV<String, KV<Source, Long>> input) {
-                final KV<Source, Long> value = input.getValue();
-                return new SourceWithRef(value.getKey(), value.getValue());
-            }
-        };
+        pipeline.run();
     }
 }
