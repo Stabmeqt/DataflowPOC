@@ -5,8 +5,6 @@ import com.epam.ab.join.model.Source;
 import com.epam.ab.join.model.SourceWithRef;
 import com.epam.ab.join.operation.ProcessingOptions;
 import com.epam.ab.join.transform.BigTableBatchGetFn;
-import com.epam.ab.join.transform.ConsolePrintFn;
-import com.epam.ab.join.transform.FlattenListFn;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.AvroIO;
@@ -17,7 +15,7 @@ import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 
-import java.io.Console;
+import java.util.Objects;
 
 public class BatchOperationProcessor implements OperationProcessor {
     private final ProcessingOptions options;
@@ -29,7 +27,7 @@ public class BatchOperationProcessor implements OperationProcessor {
     @Override
     public void processPipeline() {
         final Pipeline pipeline = options.getPipeline();
-        final CloudBigtableScanConfiguration configuration = options.getConfiguration();
+        final CloudBigtableScanConfiguration configuration = Objects.requireNonNull(options.getConfiguration());
         final BasicOptions pipelineOptions = options.getPipelineOptions();
 
 

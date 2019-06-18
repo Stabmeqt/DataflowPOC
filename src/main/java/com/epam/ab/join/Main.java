@@ -17,24 +17,24 @@ public class Main {
         final BasicOptions pipelineOptions = PipelineOptionsFactory.fromArgs(args).as(BasicOptions.class);
         final Pipeline pipeline = Pipeline.create(pipelineOptions);
 
-        final Scan scan = new Scan();
-        scan.setCacheBlocks(true);
 
-        CloudBigtableScanConfiguration configuration = new CloudBigtableScanConfiguration.Builder()
-                .withProjectId(pipelineOptions.getProject())
-                .withInstanceId(pipelineOptions.getInstanceId())
-                .withTableId(pipelineOptions.getTableId())
-                .withScan(scan).build();
-
-        final ProcessingOptions processingOptions = new ProcessingOptions(pipeline, configuration,
-                pipelineOptions);
-
+        CloudBigtableScanConfiguration configuration = null;
         BigTableClientConnectionOptions.ClientType clientType = null;
         if (pipelineOptions.getOperation() == BasicOptions.Operation.REST) {
             clientType = BigTableClientConnectionOptions.ClientType.REST;
         } else if (pipelineOptions.getOperation() == BasicOptions.Operation.GRPC) {
             clientType = BigTableClientConnectionOptions.ClientType.GRPC;
+        } else {
+            final Scan scan = new Scan();
+            scan.setCacheBlocks(true);
+            configuration = new CloudBigtableScanConfiguration.Builder()
+                    .withProjectId(pipelineOptions.getProject())
+                    .withInstanceId(pipelineOptions.getInstanceId())
+                    .withTableId(pipelineOptions.getTableId())
+                    .withScan(scan).build();
         }
+        ProcessingOptions processingOptions = new ProcessingOptions(pipeline, configuration,
+                pipelineOptions);
 
         final BigTableClientConnectionOptions connectionOptions = new BigTableClientConnectionOptions(clientType,
                 pipelineOptions.getClientHost(), pipelineOptions.getClientPort());

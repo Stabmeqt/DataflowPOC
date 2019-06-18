@@ -15,7 +15,7 @@ public class ProcessingOptions {
     public ProcessingOptions(Pipeline pipeline, CloudBigtableScanConfiguration configuration,
                              BasicOptions pipelineOptions) {
         this.pipeline = Objects.requireNonNull(pipeline);
-        this.configuration = Objects.requireNonNull(configuration);
+        this.configuration = configuration;
         this.pipelineOptions = Objects.requireNonNull(pipelineOptions);
     }
 

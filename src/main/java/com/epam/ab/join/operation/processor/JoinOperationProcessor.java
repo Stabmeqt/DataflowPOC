@@ -19,6 +19,8 @@ import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.TypeDescriptors;
 
+import java.util.Objects;
+
 public class JoinOperationProcessor implements OperationProcessor {
     private final ProcessingOptions options;
 
@@ -39,7 +41,7 @@ public class JoinOperationProcessor implements OperationProcessor {
     @Override
     public void processPipeline() {
         final Pipeline pipeline = options.getPipeline();
-        final CloudBigtableScanConfiguration configuration = options.getConfiguration();
+        final CloudBigtableScanConfiguration configuration = Objects.requireNonNull(options.getConfiguration());
         final BasicOptions pipelineOptions = options.getPipelineOptions();
 
         final PCollection<KV<String, Long>> kvBigTableCollection =

@@ -10,19 +10,23 @@ BigtableMicroservice (either using REST or GRPC) and outputs the joined result.
 ## Prerequisites
 Dataflow API should be enabled in your GCP project.
 BigTable should be pre-populated with the data from NameYear.avro (please refer to https://github
-.com/dvalex0707/BigtableMicroservicePoc)
+.com/dvalex0707/BigtableMicroservicePoc). Make sure to write down the IP address of the service.
 
 ## Installation
-Clone and compile. Fat jar will be produced.
+Clone and compile. Fat jar will be produced. Export needed environment variables.
 ```bash
 git clone https://github.com/Stabmeqt/DataflowPOC
 cd DataflowPOC
 mvn clean package
+export PROJECT_ID=[YOUR_PROJECT_ID]
+export BUCKET_ID=[YOUR_BUCKET]
+export BIGTABLE_INSTANCE_ID=[YOUR_BIGTABLE_INSTANCE_ID]
+export SERVICE_HOST=[EXTERNAL_MICROSERVICE_IP_ADDRESS]
 ```
 Copy the input avro file to your cloud storage
 ```bash
 cd in
-gsutil cp 10k_c.avro gs://[YOUR_BUCKET]
+gsutil cp 10k_c.avro gs://$BUCKET_ID/data
 ```
 
 ## Run the pipeline
@@ -38,7 +42,7 @@ Several parameters should be specified in order to invoke pipeline job on Datafl
 1. Microservice hostname
 1. Microservice port
 1. Batch size
-```
+```bash
 java -jar DataflowPOC-1.0-SNAPSHOT.jar \
 --runner=DataflowRunner \
 --tempLocation=gs://[BUCKET_ID/tmp] \
@@ -50,6 +54,59 @@ java -jar DataflowPOC-1.0-SNAPSHOT.jar \
 --operation=[join|batch|rest|grpc] \
 --clientHost=[MICROSERVICE_HOST] \
 --clientPort=[MICROSERVICE_PORT] \
+--batchSize=1000
+```
+
+## Examples
+Bigtable batching
+```bash
+java -jar DataflowPOC-1.0-SNAPSHOT.jar \
+--runner=DataflowRunner \
+--tempLocation=gs://$BUCKET_ID/tmp \
+--project=$PROJECT_ID \
+--inputFile=gs://$BUCKET_ID/data/10k_c.avro \
+--outputFolder=gs://$BUCKET_ID/out \
+--instanceId=$BIGTABLE_INSTANCE_ID \
+--tableId=NameYear \
+--operation=batch \
+--batchSize=1000
+```
+Bigtable join
+```bash
+java -jar DataflowPOC-1.0-SNAPSHOT.jar \
+--runner=DataflowRunner \
+--tempLocation=gs://$BUCKET_ID/tmp \
+--project=$PROJECT_ID \
+--inputFile=gs://$BUCKET_ID/data/10k_c.avro \
+--outputFolder=gs://$BUCKET_ID/out \
+--instanceId=$BIGTABLE_INSTANCE_ID \
+--tableId=NameYear \
+--operation=join
+```
+Microservice REST batch
+```bash
+java -jar DataflowPOC-1.0-SNAPSHOT.jar \
+--runner=DataflowRunner \
+--tempLocation=gs://$BUCKET_ID/tmp \
+--project=$PROJECT_ID \
+--inputFile=gs://$BUCKET_ID/data/10k_c.avro \
+--outputFolder=gs://$BUCKET_ID/out \
+--operation=rest \
+--clientHost=$SERVICE_HOST \
+--clientPort=8080 \
+--batchSize=1000
+```
+Microservice GRPC batch
+```bash
+java -jar DataflowPOC-1.0-SNAPSHOT.jar \
+--runner=DataflowRunner \
+--tempLocation=gs://$BUCKET_ID/tmp \
+--project=$PROJECT_ID \
+--inputFile=gs://$BUCKET_ID/data/10k_c.avro \
+--outputFolder=gs://$BUCKET_ID/out \
+--operation=grpc \
+--clientHost=$SERVICE_HOST \
+--clientPort=6565 \
 --batchSize=1000
 ```
 
