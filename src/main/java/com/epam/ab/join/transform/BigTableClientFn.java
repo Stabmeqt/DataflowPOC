@@ -48,7 +48,9 @@ public class BigTableClientFn extends DoFn<KV<String, Iterable<Source>>, List<So
         List<SourceWithRef> resultList = new ArrayList<>();
 
         for (int i = 0; i < sources.size(); i++) {
-            resultList.add(new SourceWithRef(sources.get(i), refNumbers.get(i)));
+            if (refNumbers.get(i) != null) {
+                resultList.add(new SourceWithRef(sources.get(i), refNumbers.get(i)));
+            }
         }
 
         receiver.output(resultList);

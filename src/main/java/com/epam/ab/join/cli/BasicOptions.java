@@ -10,7 +10,9 @@ public interface BasicOptions extends DataflowPipelineOptions {
         @JsonProperty("join") JOIN,
         @JsonProperty("batch") BATCH,
         @JsonProperty("rest") REST,
-        @JsonProperty("grpc") GRPC
+        @JsonProperty("grpc") GRPC,
+        @JsonProperty("datastore") DATASTORE,
+        @JsonProperty("firestore") FIRESTORE
     }
 
     @Default.String("in/10k_c.avro")
@@ -44,4 +46,8 @@ public interface BasicOptions extends DataflowPipelineOptions {
     @Default.Long(100L)
     long getBatchSize();
     void setBatchSize(long size);
+
+    @Default.Boolean(false)
+    boolean getFillDatastore();
+    void setFillDatastore(boolean fillDatastore);
 }

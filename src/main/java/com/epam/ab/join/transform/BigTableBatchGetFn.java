@@ -23,12 +23,11 @@ import java.util.stream.StreamSupport;
 public class BigTableBatchGetFn extends AbstractCloudBigtableTableDoFn<KV<String, Iterable<Source>>, List<SourceWithRef>> {
 
     private String tableId;
-    private final Map<String, Source> sourceMap;
+    private final Map<String, Source> sourceMap = new HashMap<>();
 
     public BigTableBatchGetFn(CloudBigtableConfiguration config, String tableId) {
         super(config);
         this.tableId = tableId;
-        sourceMap = new HashMap<>();
     }
 
     @ProcessElement
@@ -52,6 +51,7 @@ public class BigTableBatchGetFn extends AbstractCloudBigtableTableDoFn<KV<String
         if (result != null) {
             final List<SourceWithRef> joined = Stream.of(result)
                     .map(item -> ResultExtractor.extractFromResult(item))
+                    .filter(extracted -> extracted.getKey() != null && sourceMap.get(extracted.getKey()) != null)
                     .map(extracted -> new SourceWithRef(sourceMap.get(extracted.getKey()), extracted.getRefNum()))
                     .collect(Collectors.toList());
             receiver.output(joined);
