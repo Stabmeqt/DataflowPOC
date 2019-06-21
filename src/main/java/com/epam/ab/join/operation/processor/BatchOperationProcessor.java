@@ -5,6 +5,7 @@ import com.epam.ab.join.model.Source;
 import com.epam.ab.join.model.SourceWithRef;
 import com.epam.ab.join.operation.ProcessingOptions;
 import com.epam.ab.join.transform.BigTableBatchGetFn;
+import com.epam.ab.join.transform.ConsolePrintFn;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.AvroIO;
@@ -39,11 +40,12 @@ public class BatchOperationProcessor implements OperationProcessor {
         batchedAvroCollection
                 .apply(ParDo.of(new BigTableBatchGetFn(configuration, pipelineOptions.getTableId())))
                 .apply(Flatten.iterables())
+                .apply(ParDo.of(new ConsolePrintFn<>()))
                 .apply(AvroIO.write(SourceWithRef.class)
                         .to(pipelineOptions.getOutputFolder() + "/out")
                         .withoutSharding()
                         .withSuffix(".avro"));
 
-        pipeline.run();
+        pipeline.run().waitUntilFinish();
     }
 }
