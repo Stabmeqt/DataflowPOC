@@ -52,6 +52,9 @@ public class BigTableBatchGetFn extends AbstractCloudBigtableTableDoFn<KV<String
         if (result != null) {
             final List<SourceWithRef> joined = Stream.of(result)
                     .map(item -> ResultExtractor.extractFromResult(item))
+                    .filter(extracted -> extracted != null
+                            && extracted.getKey() != null
+                            && sourceMap.get(extracted.getKey()) != null)
                     .map(extracted -> new SourceWithRef(sourceMap.get(extracted.getKey()), extracted.getRefNum()))
                     .collect(Collectors.toList());
             receiver.output(joined);
