@@ -43,7 +43,7 @@ public interface BasicOptions extends DataflowPipelineOptions {
     int getClientPort();
     void setClientPort(int port);
 
-    @Default.Long(100L)
+    @Default.Long(1000L)
     long getBatchSize();
     void setBatchSize(long size);
 

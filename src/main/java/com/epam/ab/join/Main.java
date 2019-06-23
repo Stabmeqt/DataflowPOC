@@ -2,10 +2,13 @@ package com.epam.ab.join;
 
 import com.epam.ab.join.cli.BasicOptions;
 import com.epam.ab.join.model.DistinctNames;
+import com.epam.ab.join.model.Source;
+import com.epam.ab.join.model.SourceWithRef;
 import com.epam.ab.join.operation.BigTableClientConnectionOptions;
 import com.epam.ab.join.operation.OperationProcessorFactory;
 import com.epam.ab.join.operation.ProcessingOptions;
 import com.epam.ab.join.operation.processor.OperationProcessor;
+import com.epam.ab.join.transform.DatastoreBatchGetFn;
 import com.google.cloud.bigtable.beam.CloudBigtableScanConfiguration;
 import com.google.cloud.datastore.*;
 import com.google.datastore.v1.Entity;
@@ -14,11 +17,8 @@ import com.google.datastore.v1.client.DatastoreHelper;
 import org.apache.beam.sdk.Pipeline;
 import org.apache.beam.sdk.io.AvroIO;
 import org.apache.beam.sdk.io.gcp.datastore.DatastoreIO;
-import org.apache.beam.sdk.io.gcp.datastore.DatastoreV1;
 import org.apache.beam.sdk.options.PipelineOptionsFactory;
-import org.apache.beam.sdk.transforms.MapElements;
-import org.apache.beam.sdk.transforms.PTransform;
-import org.apache.beam.sdk.transforms.SimpleFunction;
+import org.apache.beam.sdk.transforms.*;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.hadoop.hbase.client.Scan;
@@ -57,10 +57,6 @@ public class Main {
         }
     }
 
-    private static void processDatastoreRoutine(BasicOptions pipelineOptions) {
-
-    }
-
     private static void processBigTableRoutine(BasicOptions pipelineOptions) {
         final Pipeline pipeline = Pipeline.create(pipelineOptions);
 
@@ -92,7 +88,27 @@ public class Main {
         processor.processPipeline();
     }
 
-    private static void fillDatastoreFromAvro(BasicOptions pipelineOptions) throws Exception {
+    private static void processDatastoreRoutine(BasicOptions pipelineOptions) {
+        final Pipeline pipeline = Pipeline.create(pipelineOptions);
+        final String connString = String.format("%s:%d",
+                pipelineOptions.getClientHost(), pipelineOptions.getClientPort());
+
+        PCollection<Source> initialAvroCollection = pipeline
+                .apply(AvroIO.read(Source.class).from(pipelineOptions.getInputFile()));
+
+        initialAvroCollection
+                .apply(MapElements.via(OperationProcessor.mapToKV()))
+                .apply(GroupIntoBatches.ofSize(pipelineOptions.getBatchSize()))
+                .apply(ParDo.of(new DatastoreBatchGetFn(connString, pipelineOptions.getProject())))
+                .apply(AvroIO.write(SourceWithRef.class)
+                        .to(pipelineOptions.getOutputFolder() + "/out")
+                        .withoutSharding()
+                        .withSuffix(".avro"));
+
+        pipeline.run();
+    }
+
+    private static void fillDatastoreFromAvro(BasicOptions pipelineOptions) {
         //TODO find a way to change row_number to rowNumber
         final Pipeline pipeline = Pipeline.create(pipelineOptions);
 
@@ -105,7 +121,7 @@ public class Main {
                 return input.apply(MapElements.via(new SimpleFunction<DistinctNames, Entity>() {
                     @Override
                     public Entity apply(DistinctNames input) {
-                        final Key.Builder testKeyBuilder = DatastoreHelper.makeKey("TestKind", input.getRowNumber());
+                        final Key.Builder testKeyBuilder = DatastoreHelper.makeKey("DistinctNames", input.getKey());
                         final Entity.Builder entityBuilder = Entity.newBuilder().setKey(testKeyBuilder.build());
 
                         entityBuilder.putProperties("name", DatastoreHelper.makeValue(input.getName()).build());
@@ -119,36 +135,16 @@ public class Main {
             }
         });
 
-        DatastoreV1.Write datastoreWrite = DatastoreIO.v1()
-                .write()
-                .withProjectId(pipelineOptions.getProject());
-
         entityPCollection
-                /*.apply(MapElements.via(new SimpleFunction<Entity, KV<Long, Entity>>() {
-                    @Override
-                    public KV<Long, Entity> apply(Entity input) {
-                        return KV.of(1L, input);
-                    }
-                }))
-                .apply(GroupIntoBatches.ofSize(10_000L))
-                .apply(new PTransform<PCollection<KV<Long, Iterable<Entity>>>, PCollection<Entity>>() {
-                    @Override
-                    public PCollection<Entity> expand(PCollection<KV<Long, Iterable<Entity>>> input) {
-                        return input
-                                .apply(ParDo.of(new DoFn<KV<Long, Iterable<Entity>>, Entity>() {
-                                    @ProcessElement
-                                    public void flatten(@Element KV<Long, Iterable<Entity>> in, OutputReceiver<Entity> out) {
-                                        StreamSupport.stream(in.getValue().spliterator(), false)
-                                                .forEach(out::output);
-                                    }
-                                }));
-                    }
-                })*/
-                .apply(datastoreWrite);
+                .apply(DatastoreIO.v1()
+                        .write()
+                        .withProjectId(pipelineOptions.getProject()));
+
 
         pipeline.run();
     }
 
+    //FIXME: remove after local testing
     private static void testDatastore() throws Exception {
 
         final Datastore datastore = DatastoreOptions.newBuilder()

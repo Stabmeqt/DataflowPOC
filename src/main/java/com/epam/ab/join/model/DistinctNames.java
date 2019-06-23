@@ -23,6 +23,10 @@ public class DistinctNames {
         return row_number;
     }
 
+    public String getKey() {
+        return String.format("%s|%d", name, year);
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this)
