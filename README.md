@@ -35,8 +35,8 @@ export SERVICE_HOST=[EXTERNAL_MICROSERVICE_IP_ADDRESS]
 Copy the input avro files to your cloud storage
 ```bash
 cd in
-gsutil cp 10k_c.avro gs://$BUCKET_ID/data
-gsutil cp new_names.avro gs://$BUCKET_ID/data
+gsutil cp 10k_c.avro gs://$BUCKET_ID/data/
+gsutil cp new_names.avro gs://$BUCKET_ID/data/
 ```
 
 ## Run the pipeline
